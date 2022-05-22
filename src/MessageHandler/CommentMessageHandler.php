@@ -2,6 +2,7 @@
 
 namespace App\MessageHandler;
 
+use App\ImageOptimizer;
 use App\Message\CommentMessage;
 use App\Repository\CommentRepository;
 use App\SpamChecker;
@@ -22,7 +23,9 @@ class CommentMessageHandler implements MessageHandlerInterface
         private MessageBusInterface $bus,
         private WorkflowInterface $commentStateMachine,
         private MailerInterface $mailer,
+        private ImageOptimizer $imageOptimizer,
         private string $adminEmail,
+        private string $photoDir,
         private ?LoggerInterface $logger = null,
     )
     {
@@ -55,6 +58,11 @@ class CommentMessageHandler implements MessageHandlerInterface
                 ->to($this->adminEmail)
                 ->context(['comment' => $comment])
             );
+        } elseif ($this->commentStateMachine->can($comment, 'optimize')) {
+            if ($comment->getPhotoFilename()) {
+                $this->imageOptimizer->resize($this->photoDir . '/' . $comment->getPhotoFilename());
+                $this->commentStateMachine->apply($comment, 'optimize');
+            }
         } else {
             $this->logger->debug('Dropping comment message', ['comment' => $comment->getId(), 'state' => $comment->getState()]);
         }
