@@ -4,8 +4,10 @@ namespace App\Entity;
 
 use App\Repository\CommentRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CommentRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Comment
 {
     #[ORM\Id]
@@ -14,12 +16,16 @@ class Comment
     private $id;
 
     #[ORM\Column(type: 'string', length: 255)]
+    #[Assert\NotBlank]
     private $author;
 
     #[ORM\Column(type: 'text')]
+    #[Assert\NotBlank]
     private $text;
 
     #[ORM\Column(type: 'string', length: 255)]
+    #[Assert\NotBlank]
+    #[Assert\Email]
     private $email;
 
     #[ORM\Column(type: 'datetime_immutable')]
@@ -31,6 +37,9 @@ class Comment
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $photoFilename;
+
+    #[ORM\Column(type: 'string', length: 255, options: ["default" => "submitted"])]
+    private $state;
 
     public function getId(): ?int
     {
@@ -97,6 +106,12 @@ class Comment
         return $this;
     }
 
+    #[ORM\PrePersist]
+    public function setCreatedAtValue(): void
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    }
+
     public function getPhotoFilename(): ?string
     {
         return $this->photoFilename;
@@ -105,6 +120,18 @@ class Comment
     public function setPhotoFilename(?string $photoFilename): self
     {
         $this->photoFilename = $photoFilename;
+
+        return $this;
+    }
+
+    public function getState(): ?string
+    {
+        return $this->state;
+    }
+
+    public function setState(string $state): self
+    {
+        $this->state = $state;
 
         return $this;
     }
