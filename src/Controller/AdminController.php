@@ -21,12 +21,14 @@ class AdminController extends AbstractController
     private $twig;
     private $entityManager;
     private $bus;
+    private MailerInterface $mailer;
 
-    public function __construct(Environment $twig, EntityManagerInterface $entityManager, MessageBusInterface $bus)
+    public function __construct(Environment $twig, EntityManagerInterface $entityManager, MessageBusInterface $bus, MailerInterface $mailer)
     {
         $this->twig = $twig;
         $this->entityManager = $entityManager;
         $this->bus = $bus;
+        $this->mailer = $mailer;
     }
 
     #[Route('/comment/review/{id}', name: 'review_comment')]
@@ -48,6 +50,7 @@ class AdminController extends AbstractController
 
         if ($accepted) {
             $this->bus->dispatch(new CommentMessage($comment->getId()));
+
         }
 
         return new Response($this->twig->render('admin/review.html.twig', [
