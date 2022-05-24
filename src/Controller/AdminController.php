@@ -21,14 +21,12 @@ class AdminController extends AbstractController
     private $twig;
     private $entityManager;
     private $bus;
-    private MailerInterface $mailer;
 
-    public function __construct(Environment $twig, EntityManagerInterface $entityManager, MessageBusInterface $bus, MailerInterface $mailer)
+    public function __construct(Environment $twig, EntityManagerInterface $entityManager, MessageBusInterface $bus)
     {
         $this->twig = $twig;
         $this->entityManager = $entityManager;
         $this->bus = $bus;
-        $this->mailer = $mailer;
     }
 
     #[Route('/comment/review/{id}', name: 'review_comment')]

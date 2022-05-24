@@ -34,6 +34,9 @@ class CommentMessageHandler implements MessageHandlerInterface
     {
     }
 
+    /**
+     * @throws \Symfony\Component\Mailer\Exception\TransportExceptionInterface
+     */
     public function __invoke(CommentMessage $message)
     {
         $comment = $this->commentRepository->find($message->getId());
@@ -67,8 +70,15 @@ class CommentMessageHandler implements MessageHandlerInterface
         } elseif ($this->commentStateMachine->can($comment, 'optimize')) {
             if ($comment->getPhotoFilename()) {
                 $this->imageOptimizer->resize($this->photoDir . '/' . $comment->getPhotoFilename());
-                $this->commentStateMachine->apply($comment, 'optimize');
             }
+            $this->commentStateMachine->apply($comment, 'optimize');
+            $this->mailer->send((new NotificationEmail())
+                ->subject('Your comment is published')
+                ->htmlTemplate('emails/comment_published.html.twig')
+                ->from($this->adminEmail)
+                ->to($comment->getEmail())
+                ->context(['comment' => $comment])
+            );
         } else {
             $this->logger->debug('Dropping comment message', ['comment' => $comment->getId(), 'state' => $comment->getState()]);
         }
